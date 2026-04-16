@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spray Chart Generator v12h Exact Touch iPad Fix</title>
+<style>
+:root{
+  --bg:#f4f4f4; --panel:#fff; --blue:#0077ff; --blue2:#005fcc; --gray:#5a6268;
+  --gray2:#444b50; --green:#28a745; --green2:#1e7e34; --red:#dc3545; --red2:#b52a37;
+  --orange:#d97a00; --shadow:0 2px 6px rgba(0,0,0,.18);
+}
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg)}
+h1{text-align:center;margin:0 0 18px;font-size:32px}
+h2{margin:0 0 12px}
+h3{margin:12px 0 8px}
+.panel{background:var(--panel);padding:18px;border-radius:10px;box-shadow:var(--shadow);margin-bottom:18px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+label{font-weight:bold}
+input[type="text"], input[type="number"], textarea, select{
+  padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px; min-width:0;
+}
+input[type="text"], textarea, select{flex:1 1 220px}
+textarea{width:100%;min-height:110px;resize:vertical}
+button{
+  padding:11px 16px;font-size:15px;border:none;background:var(--blue);color:#fff;border-radius:6px;cursor:pointer
+}
+button:hover{background:var(--blue2)}
+.secondaryBtn{background:var(--gray)}
+.secondaryBtn:hover{background:var(--gray2)}
+.goodBtn{background:var(--green)}
+.goodBtn:hover{background:var(--green2)}
+.warnBtn{background:var(--red)}
+.warnBtn:hover{background:var(--red2)}
+.smallBtn{padding:7px 10px;font-size:13px}
+.helper{font-size:13px;color:#555}
+#storageNote{margin-top:8px;font-size:13px;color:#555}
+.tabRow{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.tabBtn.active{background:#0052b4}
+.tabPane{display:none}
+.tabPane.active{display:block}
+.hiddenInput{display:none}
+
+/* charts */
+#chartGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.chartCard{background:#fff;padding:12px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.2);text-align:center}
+.playerTitle{font-size:22px;font-weight:bold;margin-bottom:6px}
+.editName{width:90%;font-size:20px;padding:6px;border:1px solid #aaa;border-radius:6px;margin-bottom:6px}
+.chartCanvas{border:1px solid #333;background:#fff;margin-bottom:10px;width:100%;height:auto}
+.saveBtn{padding:8px 12px;background:var(--green);color:#fff;border-radius:6px;cursor:pointer;margin-top:6px}
+.legendBox{text-align:left;margin-bottom:10px;font-size:15px}
+.legendItem{display:flex;align-items:center;margin:3px 0}
+.legendLine{width:40px;height:0;margin-right:10px}
+.legendBuntCanvas{margin-right:10px}
+.statsRow{font-size:13px;margin:4px 0 6px;line-height:1.4}
+.blankUnderline{margin-bottom:6px;font-size:24px;font-weight:bold;text-decoration:underline}
+.provHint{margin-top:5px;color:var(--orange);font-size:12px}
+
+/* live layout */
+#liveLayout{display:grid;grid-template-columns:340px 1fr 300px;gap:18px}
+#battingList{display:flex;flex-direction:column;gap:8px;max-height:72vh;overflow:auto}
+.batterRow{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #ddd;border-radius:8px;background:#fafafa}
+.batterRow.current{border:2px solid var(--blue);background:#eef5ff}
+.orderBox{width:58px}
+.namePill{flex:1;font-size:14px}
+.liveBadge{font-size:11px;padding:2px 6px;border-radius:10px;background:#f3f3f3}
+#liveFieldCanvas{border:1px solid #333;background:#fff;max-width:100%;height:auto;touch-action:manipulation}
+#resultButtons{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#resultButtons button.activeResult{outline:3px solid #222}
+#notesBox{width:100%;min-height:82px}
+#swingGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:210px;max-width:100%}
+.swingCell{height:56px;border:1px solid #666;border-radius:4px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;text-align:center;padding:3px}
+.swingCell.selected{background:#ffe08a}
+#liveLog, #sessionList, #insightBox{max-height:250px;overflow:auto;border:1px solid #ddd;padding:8px;border-radius:8px;background:#fafafa}
+.logItem, .sessionItem, .insightItem{padding:6px 4px;border-bottom:1px solid #e7e7e7;font-size:13px}
+.kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.kpiCard{background:#f7f9ff;border:1px solid #dbe6ff;border-radius:8px;padding:8px;font-size:13px}
+#sessionFilters .row{margin-bottom:6px}
+.tag{display:inline-block;font-size:11px;padding:2px 6px;border-radius:10px;background:#eef5ff;margin-left:6px}
+
+/* lock screen */
+#lockScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
+#lockScreen input{padding:10px;font-size:18px;border-radius:6px;border:none}
+#lockScreen button{margin-top:10px;padding:10px 20px;font-size:16px}
+#pwError{color:#ff6b6b;display:none}
+
+@media (max-width: 1100px){
+  #liveLayout{grid-template-columns:1fr}
+  #chartGrid{grid-template-columns:1fr}
+}
+@media print{
+  body{background:#fff;margin:0;padding:0}
+  .tabRow, #inputSection, #liveControlsPanel, #liveSidePanel, #sessionPanel{display:none}
+  #chartGrid{display:block;padding:0;margin:0}
+  .chartCard{box-shadow:none;border-radius:0;border:none;width:100%;margin:0;page-break-after:always;break-after:page}
+}
+</style>
+</head>
+<body>
+
+<div id="lockScreen">
+  <h2>Enter Password</h2>
+  <input id="pwInput" type="password">
+  <button onclick="checkPW()">Unlock</button>
+  <p id="pwError">Wrong password</p>
+</div>
+
+<h1>Spray Chart Generator v12h Exact Touch iPad Fix</h1>
+
+<div class="tabRow">
+  <button class="tabBtn active" onclick="showTab('managePane', this)">Manage / Build</button>
+  <button class="tabBtn" onclick="showTab('livePane', this)">Live Game Mode</button>
+</div>
+
+<section id="managePane" class="tabPane active">
+  <section id="inputSection" class="panel">
+    <h2>Paste GameChanger Play-by-Play Below</h2>
+
+    <div class="row">
+      <label for="teamName">Team:</label>
+      <input id="teamName" type="text" placeholder="e.g. Santa Fe Inferno MD">
+      <button type="button" onclick="saveTeamData()">Save Team PBP</button>
+      <button type="button" onclick="loadTeamData()">Load Team PBP</button>
+      <select id="savedTeamList" onchange="selectSavedTeam()">
+        <option value="">Saved teams…</option>
+      </select>
+      <button type="button" class="secondaryBtn" onclick="deleteSelectedTeam()">Delete Saved Team</button>
+    </div>
+
+    <div class="row">
+      <button type="button" class="secondaryBtn" onclick="exportTeams()">Export Saved Teams</button>
+      <button type="button" class="secondaryBtn" onclick="triggerImport()">Import Saved Teams</button>
+      <input type="file" id="importFile" class="hiddenInput" accept=".json,application/json" onchange="importTeams(event)">
+      <button type="button" class="secondaryBtn" onclick="refreshSavedTeamsDropdown()">Refresh Team List</button>
+    </div>
+
+    <textarea id="pbpInput" placeholder="Paste full GameChanger PBP here..."></textarea>
+    <div class="row">
+      <button onclick="generateCharts()">Generate Spray Charts</button>
+      <button onclick="downloadTeamPDF()">Download Team PDF</button>
+      <button class="goodBtn" onclick="buildLiveRosterFromCharts()">Send Current Charts to Live Mode</button>
+    </div>
+    <div id="storageNote">
+      Saved teams are kept in Safari storage for quick use. Export Saved Teams creates a JSON backup you can keep in Files.
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Batting Order Tools</h2>
+    <div class="row">
+      <button class="secondaryBtn" onclick="applyBattingOrder()">Apply Batting Order</button>
+      <button class="secondaryBtn" onclick="alphabetizeCards()">Alphabetize Cards</button>
+    </div>
+    <div class="helper">Type batting order numbers on the player cards, then tap Apply Batting Order. PDF pages follow that order.</div>
+  </section>
+
+  <div id="chartGrid"></div>
+</section>
+
+<section id="livePane" class="tabPane">
+  <div id="liveLayout">
+    <section class="panel" id="liveControlsPanel">
+      <h2>Lineup / Current Batter</h2>
+      <div class="row">
+        <button class="secondaryBtn smallBtn" onclick="rebuildLiveRosterFromCards()">Refresh From Cards</button>
+        <button class="secondaryBtn smallBtn" onclick="sortLiveRosterByOrder()">Sort Order</button>
+        <button class="secondaryBtn smallBtn" onclick="saveLiveState()">Save Live State</button>
+      </div>
+      <div class="row">
+        <button class="secondaryBtn smallBtn" onclick="prevBatter()">Prev Batter</button>
+        <button class="goodBtn smallBtn" onclick="nextBatter()">Next Batter</button>
+      </div>
+      <div class="row">
+        <label for="gameLabel">Game Label:</label>
+        <input id="gameLabel" type="text" placeholder="e.g. Game 1 - 8:00 AM vs FC Renegades">
+      </div>
+      <div class="row">
+        <label for="sessionName">Session Name:</label>
+        <input id="sessionName" type="text" placeholder="e.g. Renegades Morning Pool Play">
+      </div>
+      <div class="row">
+        <button class="goodBtn smallBtn" onclick="startNewSession()">Start / Switch Session</button>
+        <button class="secondaryBtn smallBtn" onclick="loadSelectedSessionToLive()">Load Highlighted Session</button>
+      </div>
+      <div id="battingList"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Live Charting</h2>
+      <div class="row">
+        <div><strong>Current Batter:</strong> <span id="currentBatterLabel">None selected</span></div>
+        <div><strong>Session:</strong> <span id="currentSessionLabel">None</span></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div>
+          <canvas id="liveFieldCanvas" width="500" height="380"></canvas>
+          <div class="helper">Tap a result type, then tap the field where the ball went. Strikeout / walk / HBP / other out do not require a field tap.</div>
+          <div id="resultButtons">
+            <button onclick="setActiveResult('LD', this)">Line Drive</button>
+            <button onclick="setActiveResult('GB', this)">Ground Ball</button>
+            <button onclick="setActiveResult('FB', this)">Fly Ball</button>
+            <button onclick="setActiveResult('BUNT', this)">Bunt</button>
+            <button onclick="recordNonBIP('K')">Strikeout</button>
+            <button onclick="recordNonBIP('BB')">Walk</button>
+            <button onclick="recordNonBIP('HBP')">HBP</button>
+            <button onclick="recordNonBIP('OUT')">Other Out</button>
+            <button class="warnBtn" onclick="undoLastLiveEntry()">Undo Last</button>
+          </div>
+        </div>
+
+        <div style="min-width:220px;flex:1 1 220px;">
+          <h3 style="margin-top:0">Pitch / Swing Zone</h3>
+          <div id="swingGrid"></div>
+          <div class="helper" style="margin-top:8px;">Tap the strike-zone box the hitter chased / made contact on.</div>
+
+          <h3>Quick Notes</h3>
+          <textarea id="notesBox" placeholder="Example: chased high outside rise... late on inside heat..."></textarea>
+          <div class="row">
+            <button class="secondaryBtn smallBtn" onclick="clearLiveDraft()">Clear Draft</button>
+            <button class="goodBtn smallBtn" onclick="attachNoteOnly()">Save Note Only</button>
+          </div>
+
+          <h3>Current Batter Log</h3>
+          <div id="liveLog"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="liveSidePanel">
+      <h2>Sessions / Insights</h2>
+      <div class="kpi">
+        <div class="kpiCard"><strong>Total live entries</strong><br><span id="kpiEntries">0</span></div>
+        <div class="kpiCard"><strong>Active sessions</strong><br><span id="kpiSessions">0</span></div>
+      </div>
+
+      <div id="sessionPanel">
+        <h3>Saved Sessions</h3>
+        <div id="sessionList"></div>
+      </div>
+
+      <h3>Filters</h3>
+      <div id="sessionFilters">
+        <div class="row">
+          <select id="filterMode" onchange="renderInsights()">
+            <option value="active">Active session only</option>
+            <option value="all">All sessions</option>
+          </select>
+        </div>
+        <div class="row">
+          <select id="filterPlayer" onchange="renderInsights()">
+            <option value="">All players</option>
+          </select>
+        </div>
+      </div>
+
+      <h3>Quick Insights</h3>
+      <div id="insightBox"></div>
+    </section>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+/* password + tabs */
+function checkPW(){
+  const pw = document.getElementById("pwInput").value;
+  if(pw === "Spartan57"){
+    document.getElementById("lockScreen").style.display = "none";
+  } else {
+    document.getElementById("pwError").style.display = "block";
+  }
+}
+function showTab(id, btn){
+  document.querySelectorAll('.tabPane').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id === 'livePane'){
+    renderLiveBatterList();
+    drawLiveField();
+    renderSessionList();
+    renderInsights();
+  }
+}
+
+/* storage */
+const STORAGE_PREFIX = "sprayChartPBP_";
+const LIVE_STATE_KEY = "sprayChartLiveState_v12f";
+function normalizeTeamName(rawName) {
+  return (rawName || "").toLowerCase().replace(/&/g, " and ").replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function getSavedTeamsMap() {
+  const teams = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(STORAGE_PREFIX)) {
+      const storageKey = key.replace(STORAGE_PREFIX, "");
+      let displayName = storageKey;
+      const stored = localStorage.getItem(key);
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === "object" && parsed.pbp !== undefined) {
+          displayName = parsed.displayName || storageKey;
+          teams[storageKey] = parsed;
+          continue;
+        }
+      } catch (e) {}
+      teams[storageKey] = { displayName, pbp: stored || "" };
+    }
+  }
+  return teams;
+}
+function refreshSavedTeamsDropdown() {
+  const select = document.getElementById("savedTeamList");
+  if (!select) return;
+  const teams = getSavedTeamsMap();
+  const entries = Object.entries(teams).sort((a, b) =>
+    (a[1].displayName || a[0]).localeCompare(b[1].displayName || b[0])
+  );
+  select.innerHTML = '<option value="">Saved teams…</option>';
+  for (const [normalizedKey, info] of entries) {
+    const option = document.createElement("option");
+    option.value = normalizedKey;
+    option.textContent = info.displayName || normalizedKey;
+    select.appendChild(option);
+  }
+}
+function getRequestedTeamInfo(showAlertIfBlank = true) {
+  const nameInput = document.getElementById("teamName");
+  const rawName = nameInput.value.trim();
+  if (!rawName) {
+    if (showAlertIfBlank) alert("Type a team name first.");
+    return null;
+  }
+  const normalized = normalizeTeamName(rawName);
+  if (!normalized) {
+    if (showAlertIfBlank) alert("Type a valid team name first.");
+    return null;
+  }
+  return { rawName, normalized, storageKey: STORAGE_PREFIX + normalized };
+}
+function saveTeamData() {
+  const info = getRequestedTeamInfo(true);
+  if (!info) return;
+  const pbpText = document.getElementById("pbpInput").value || "";
+  const payload = { displayName: info.rawName.replace(/\s+/g, " ").trim(), pbp: pbpText };
+  localStorage.setItem(info.storageKey, JSON.stringify(payload));
+  refreshSavedTeamsDropdown();
+  document.getElementById("savedTeamList").value = info.normalized;
+  alert("Saved PBP for team: " + payload.displayName);
+}
+function loadTeamData() {
+  const info = getRequestedTeamInfo(true);
+  if (!info) return;
+
+  let stored = localStorage.getItem(info.storageKey);
+  let matchedKey = info.normalized;
+  if (!stored) {
+    const teams = getSavedTeamsMap();
+    const keys = Object.keys(teams);
+    const exactDisplay = keys.find(k => (teams[k].displayName || "").toLowerCase() === info.rawName.toLowerCase());
+    if (exactDisplay) { stored = localStorage.getItem(STORAGE_PREFIX + exactDisplay); matchedKey = exactDisplay; }
+    if (!stored) {
+      const partial = keys.filter(k => k.includes(info.normalized) || info.normalized.includes(k));
+      if (partial.length === 1) { matchedKey = partial[0]; stored = localStorage.getItem(STORAGE_PREFIX + matchedKey); }
+    }
+  }
+  if (!stored) {
+    alert("No saved PBP found for that team yet.");
+    refreshSavedTeamsDropdown();
+    return;
+  }
+  let payload;
+  try { payload = JSON.parse(stored); } catch(e){ payload = { displayName: matchedKey, pbp: stored }; }
+  document.getElementById("teamName").value = payload.displayName || info.rawName;
+  document.getElementById("pbpInput").value = payload.pbp || "";
+  refreshSavedTeamsDropdown();
+  document.getElementById("savedTeamList").value = matchedKey;
+  generateCharts();
+}
+function selectSavedTeam() {
+  const select = document.getElementById("savedTeamList");
+  const normalizedKey = select.value;
+  if (!normalizedKey) return;
+  const stored = localStorage.getItem(STORAGE_PREFIX + normalizedKey);
+  if (!stored) return;
+  let payload;
+  try { payload = JSON.parse(stored); } catch(e){ payload = { displayName: normalizedKey, pbp: stored }; }
+  document.getElementById("teamName").value = payload.displayName || normalizedKey;
+}
+function deleteSelectedTeam() {
+  const select = document.getElementById("savedTeamList");
+  const normalizedKey = select.value;
+  if (!normalizedKey) { alert("Select a saved team first."); return; }
+  const label = select.options[select.selectedIndex]?.textContent || normalizedKey;
+  localStorage.removeItem(STORAGE_PREFIX + normalizedKey);
+  refreshSavedTeamsDropdown();
+  alert("Deleted saved team: " + label);
+}
+function exportTeams() {
+  const teams = getSavedTeamsMap();
+  const blob = new Blob([JSON.stringify(teams, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "spraychart-teams.json";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+function triggerImport() {
+  document.getElementById("importFile").click();
+}
+function importTeams(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || typeof data !== "object") throw new Error("Invalid file.");
+      for (const [normalizedKey, payload] of Object.entries(data)) {
+        const safeKey = normalizeTeamName(normalizedKey);
+        if (!safeKey) continue;
+        let record = payload;
+        if (typeof payload === "string") record = { displayName: normalizedKey, pbp: payload };
+        else record = { displayName: (payload.displayName || normalizedKey).trim(), pbp: payload.pbp || "" };
+        localStorage.setItem(STORAGE_PREFIX + safeKey, JSON.stringify(record));
+      }
+      refreshSavedTeamsDropdown();
+      alert("Saved teams imported successfully.");
+    } catch (err) {
+      alert("Import failed. Please choose a valid spraychart-teams.json file.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* geometry */
+const CANVAS_WIDTH  = 500;
+const CANVAS_HEIGHT = 380;
+const homeX = CANVAS_WIDTH / 2;
+const homeY = CANVAS_HEIGHT - 20;
+const outfieldRadius = homeY - 10;
+const infieldRadius  = outfieldRadius * 0.6;
+const FOUL_CENTER = -Math.PI / 2;
+const FOUL_HALF_ANGLE = 0.85;
+const FOUL_LEFT_ANGLE  = FOUL_CENTER - FOUL_HALF_ANGLE;
+const FOUL_RIGHT_ANGLE = FOUL_CENTER + FOUL_HALF_ANGLE;
+const SLICE_STEP = (FOUL_RIGHT_ANGLE - FOUL_LEFT_ANGLE) / 5;
+const ANGLE_LF   = FOUL_LEFT_ANGLE + SLICE_STEP * 0.5;
+const ANGLE_LCF  = FOUL_LEFT_ANGLE + SLICE_STEP * 1.5;
+const ANGLE_CF   = FOUL_LEFT_ANGLE + SLICE_STEP * 2.5;
+const ANGLE_RCF  = FOUL_LEFT_ANGLE + SLICE_STEP * 3.5;
+const ANGLE_RF   = FOUL_LEFT_ANGLE + SLICE_STEP * 4.5;
+function drawField(ctx) {
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  ctx.beginPath(); ctx.fillStyle = "#c2f0c2";
+  ctx.arc(homeX, homeY, outfieldRadius, FOUL_LEFT_ANGLE, FOUL_RIGHT_ANGLE, false);
+  ctx.lineTo(homeX, homeY); ctx.fill();
+
+  ctx.beginPath(); ctx.fillStyle = "#e5c29f";
+  ctx.arc(homeX, homeY, infieldRadius, FOUL_LEFT_ANGLE, FOUL_RIGHT_ANGLE, false);
+  ctx.lineTo(homeX, homeY); ctx.fill();
+
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 3;
+  const FOUL_RADIUS = outfieldRadius + 5;
+  ctx.beginPath(); ctx.moveTo(homeX, homeY); ctx.lineTo(homeX + FOUL_RADIUS * Math.cos(FOUL_LEFT_ANGLE), homeY + FOUL_RADIUS * Math.sin(FOUL_LEFT_ANGLE)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(homeX, homeY); ctx.lineTo(homeX + FOUL_RADIUS * Math.cos(FOUL_RIGHT_ANGLE), homeY + FOUL_RADIUS * Math.sin(FOUL_RIGHT_ANGLE)); ctx.stroke();
+
+  drawBase(ctx, homeX, homeY);
+  const firstBase = { x: homeX + infieldRadius * Math.cos(ANGLE_RF), y: homeY + infieldRadius * Math.sin(ANGLE_RF) };
+  const thirdBase = { x: homeX + infieldRadius * Math.cos(ANGLE_LF), y: homeY + infieldRadius * Math.sin(ANGLE_LF) };
+  const secondBase = { x: homeX + infieldRadius * Math.cos(ANGLE_CF), y: homeY + infieldRadius * Math.sin(ANGLE_CF) };
+  drawBase(ctx, firstBase.x, firstBase.y); drawBase(ctx, secondBase.x, secondBase.y); drawBase(ctx, thirdBase.x, thirdBase.y);
+
+  ctx.beginPath(); ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+  const pitcherRadius = infieldRadius * 0.5;
+  const pitcherX = homeX + pitcherRadius * Math.cos(ANGLE_CF);
+  const pitcherY = homeY + pitcherRadius * Math.sin(ANGLE_CF);
+  ctx.arc(pitcherX, pitcherY, 14, 0, Math.PI * 2); ctx.stroke();
+}
+function drawBase(ctx, x, y) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4); ctx.fillStyle = "white"; ctx.fillRect(-10, -10, 20, 20); ctx.restore();
+}
+function locToXY(loc, depth, type) {
+  const angleMap = { "LF": ANGLE_LF, "LCF": ANGLE_LCF, "CF": ANGLE_CF, "RCF": ANGLE_RCF, "RF": ANGLE_RF };
+  const angle = angleMap[loc] || ANGLE_CF;
+  let radius;
+  if (type === "BUNT") radius = infieldRadius * 0.35;
+  else if (depth === "shallow") radius = infieldRadius + 20;
+  else if (depth === "medium") radius = (infieldRadius + outfieldRadius) / 2;
+  else radius = outfieldRadius * 0.98;
+  return { x: homeX + radius * Math.cos(angle), y: homeY + radius * Math.sin(angle) };
+}
+function drawHitLine(ctx, startX, startY, endX, endY, type, provisional=false) {
+  const dx = endX - startX, dy = endY - startY;
+  const length = Math.sqrt(dx * dx + dy * dy) || 1;
+  const perpX = -dy / length, perpY = dx / length;
+  const alpha = provisional ? 0.72 : 1.0;
+  if (type === "GB") {
+    ctx.strokeStyle = provisional ? `rgba(255,140,0,${alpha})` : "green";
+    ctx.lineWidth = 2; ctx.setLineDash(provisional ? [6,6] : [8,6]);
+    ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke(); ctx.setLineDash([]);
+  } else if (type === "LD") {
+    ctx.strokeStyle = provisional ? `rgba(255,140,0,${alpha})` : "red";
+    ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke();
+  } else if (type === "FB") {
+    ctx.strokeStyle = provisional ? `rgba(255,140,0,${alpha})` : "blue";
+    ctx.lineWidth = 2; ctx.beginPath();
+    const baseMidX = (startX + endX) / 2, baseMidY = (startY + endY) / 2, bump = Math.min(110, length * 0.45);
+    let midX, midY;
+    if (Math.abs(dx) < length * 0.15) { midX = baseMidX + bump * 0.3; midY = baseMidY - bump * 0.2; }
+    else { midX = baseMidX; midY = baseMidY - bump; }
+    ctx.moveTo(startX, startY); ctx.quadraticCurveTo(midX, midY, endX, endY); ctx.stroke();
+  } else if (type === "BUNT") {
+    ctx.strokeStyle = provisional ? `rgba(255,140,0,${alpha})` : "purple";
+    ctx.lineWidth = 4; const segments = 30, amplitude = 5, frequency = 3; ctx.beginPath();
+    for (let i=0; i<=segments; i++) {
+      const t = i / segments, baseX = startX + dx * t, baseY = startY + dy * t, wiggle = Math.sin(t * Math.PI * frequency) * amplitude;
+      const x = baseX + perpX * wiggle, y = baseY + perpY * wiggle;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    } ctx.stroke();
+  }
+}
+function drawLegendBuntLine(canvas) {
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "purple"; ctx.lineWidth = 4;
+  const startX = 2, endX = canvas.width - 2, midY = canvas.height / 2, dx = endX - startX, segments=30, amplitude=5, frequency=3;
+  ctx.beginPath();
+  for (let i=0;i<=segments;i++){
+    const t=i/segments, x=startX+dx*t, y=midY+Math.sin(t*Math.PI*frequency)*amplitude;
+    if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+/* parser */
+function extractRoster(pbpText) {
+  const roster = [];
+  const rosterLines = pbpText.split("\n").filter(l => l.includes(","));
+  for (let line of rosterLines) {
+    const match = line.match(/^([A-Za-z]+)\s+([A-Za-z]+),\s*(\d+)/);
+    if (match) {
+      const fullName = match[1] + " " + match[2], number = match[3], abbrev = match[1][0] + match[2][0];
+      if (!roster.some(r => r.abbrev === abbrev)) roster.push({ abbrev, fullName, number });
+    }
+  }
+  return roster;
+}
+function parseHits(pbpText, roster) {
+  const hitsByPlayer = {}; for (let r of roster) hitsByPlayer[r.abbrev] = [];
+  const lines = pbpText.split("\n");
+  for (let raw of lines) {
+    const line = raw.trim(); if (line.length < 3) continue;
+    const lower = line.toLowerCase();
+    let abbrev = null;
+    let m = line.match(/^([A-Z])\s*([A-Z])\s+/);
+    if (m) abbrev = m[1] + m[2];
+    else { const m2 = line.match(/^([A-Z]{2})\s+/); if (m2) abbrev = m2[1]; }
+    if (!abbrev || !hitsByPlayer[abbrev]) continue;
+
+    let type = null;
+    if (lower.includes("bunt")) type = "BUNT";
+    else if (lower.includes("ground ball") || lower.includes("grounds")) type = "GB";
+    else if (lower.includes("flies") || lower.includes("fly")) type = "FB";
+    else if (lower.includes("line drive") || lower.includes("line-drive")) type = "LD";
+    if (!type) continue;
+
+    let loc = "CF";
+    if (lower.includes("left center") || lower.includes("left-center")) loc = "LCF";
+    else if (lower.includes("right center") || lower.includes("right-center")) loc = "RCF";
+    else if (lower.includes("left fielder") || lower.includes("left field")) loc = "LF";
+    else if (lower.includes("right fielder") || lower.includes("right field")) loc = "RF";
+
+    let depth = "medium";
+    if (lower.includes("shallow")) depth = "shallow";
+    else if (lower.includes("deep")) depth = "deep";
+    if (type === "BUNT") depth = "shallow";
+
+    hitsByPlayer[abbrev].push({ type, loc, depth, source: "official" });
+  }
+  return hitsByPlayer;
+}
+
+/* chart building */
+function makeLegend() {
+  const box = document.createElement("div");
+  box.className = "legendBox";
+  box.innerHTML =
+    '<div class="legendItem"><div class="legendLine" style="border-top:3px solid red"></div> Line Drive</div>' +
+    '<div class="legendItem"><div class="legendLine" style="border-top:3px dashed green"></div> Ground Ball</div>' +
+    '<div class="legendItem"><div class="legendLine" style="border-top:3px solid blue"></div> Fly Ball</div>' +
+    '<div class="legendItem"><canvas class="legendBuntCanvas" width="60" height="16"></canvas> Bunt</div>' +
+    '<div class="provHint">Orange overlay = live provisional hits</div>';
+  const buntCanvas = box.querySelector(".legendBuntCanvas");
+  if (buntCanvas) drawLegendBuntLine(buntCanvas);
+  return box;
+}
+function buildChartCard(fullName, number, hitArray, orderNum="") {
+  const card = document.createElement("div");
+  card.className = "chartCard";
+  card.dataset.playerName = fullName;
+  card.dataset.playerNumber = number;
+
+  const title = document.createElement("div");
+  title.className = "playerTitle";
+  title.textContent = `${fullName}  (#${number})`;
+  card.appendChild(title);
+
+  const orderRow = document.createElement("div");
+  orderRow.className = "row";
+  orderRow.style.justifyContent = "center";
+  orderRow.innerHTML = `<label style="font-size:14px;">Batting Order:</label><input type="number" class="orderInput" min="1" style="width:70px;" value="${orderNum || ''}">`;
+  card.appendChild(orderRow);
+
+  card.appendChild(makeLegend());
+
+  const statsDiv = document.createElement("div");
+  statsDiv.className = "statsRow";
+  card.appendChild(statsDiv);
+
+  const canvas = document.createElement("canvas");
+  canvas.className = "chartCanvas";
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
+  card.appendChild(canvas);
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save PNG";
+  saveBtn.className = "saveBtn";
+  saveBtn.onclick = () => saveChartPNG(canvas, fullName);
+  card.appendChild(saveBtn);
+
+  card._officialHits = hitArray || [];
+  card._provisionalHits = [];
+  redrawCard(card);
+  return card;
+}
+function buildBlankChart(orderNum="") {
+  const card = document.createElement("div");
+  card.className = "chartCard";
+  card.dataset.playerName = "";
+  card.dataset.playerNumber = "";
+
+  const underline = document.createElement("div");
+  underline.className = "blankUnderline";
+  underline.textContent = "__________________________  (#____)";
+  card.appendChild(underline);
+
+  const input = document.createElement("input");
+  input.className = "editName";
+  input.placeholder = "Type Player Name Here...";
+  card.appendChild(input);
+
+  const orderRow = document.createElement("div");
+  orderRow.className = "row";
+  orderRow.style.justifyContent = "center";
+  orderRow.innerHTML = `<label style="font-size:14px;">Batting Order:</label><input type="number" class="orderInput" min="1" style="width:70px;" value="${orderNum || ''}">`;
+  card.appendChild(orderRow);
+
+  card.appendChild(makeLegend());
+
+  const statsDiv = document.createElement("div");
+  statsDiv.className = "statsRow";
+  card.appendChild(statsDiv);
+
+  const canvas = document.createElement("canvas");
+  canvas.className = "chartCanvas";
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
+  card.appendChild(canvas);
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save PNG";
+  saveBtn.className = "saveBtn";
+  saveBtn.onclick = () => saveChartPNG(canvas, input.value || "Blank Player");
+  card.appendChild(saveBtn);
+
+  card._officialHits = [];
+  card._provisionalHits = [];
+  redrawCard(card);
+  return card;
+}
+function redrawCard(card){
+  const canvas = card.querySelector('.chartCanvas');
+  const ctx = canvas.getContext('2d');
+  drawField(ctx);
+
+  const official = card._officialHits || [];
+  const provisional = card._provisionalHits || [];
+  official.forEach(h=>{
+    if (["LD","GB","FB","BUNT"].includes(h.type)) {
+      const end = (typeof h.endX === 'number' && typeof h.endY === 'number')
+        ? { x: h.endX, y: h.endY }
+        : locToXY(h.loc, h.depth, h.type);
+      drawHitLine(ctx, homeX, homeY - 6, end.x, end.y, h.type, false);
+    }
+  });
+  provisional.forEach(h=>{
+    if (["LD","GB","FB","BUNT"].includes(h.type)) {
+      const end = (typeof h.endX === 'number' && typeof h.endY === 'number')
+        ? { x: h.endX, y: h.endY }
+        : locToXY(h.loc, h.depth, h.type);
+      drawHitLine(ctx, homeX, homeY - 6, end.x, end.y, h.type, true);
+    }
+  });
+
+  const stats = { LD: 0, GB: 0, FB: 0, BUNT: 0 }, prov = { LD: 0, GB: 0, FB: 0, BUNT: 0 };
+  official.forEach(h=>{ if(stats[h.type] !== undefined) stats[h.type]++; });
+  provisional.forEach(h=>{ if(prov[h.type] !== undefined) prov[h.type]++; });
+  const statsDiv = card.querySelector('.statsRow');
+  statsDiv.innerHTML =
+    `Official → LD: ${stats.LD} | GB: ${stats.GB} | FB: ${stats.FB} | Bunt: ${stats.BUNT} | Total: ${stats.LD+stats.GB+stats.FB+stats.BUNT}<br>` +
+    `Live provisional → LD: ${prov.LD} | GB: ${prov.GB} | FB: ${prov.FB} | Bunt: ${prov.BUNT} | Total: ${prov.LD+prov.GB+prov.FB+prov.BUNT}`;
+}
+function generateCharts() {
+  const pbpText = document.getElementById("pbpInput").value || "";
+  const roster = extractRoster(pbpText);
+  const hits = parseHits(pbpText, roster);
+  const grid = document.getElementById("chartGrid");
+  grid.innerHTML = "";
+  let order = 1;
+  for (let r of roster) grid.appendChild(buildChartCard(r.fullName, r.number, hits[r.abbrev] || [], order++));
+  grid.appendChild(buildBlankChart(order++));
+  grid.appendChild(buildBlankChart(order++));
+}
+function getCardOrder(card){
+  const v = parseInt(card.querySelector('.orderInput')?.value, 10);
+  return Number.isFinite(v) ? v : 9999;
+}
+function cardDisplayName(card){
+  const editable = card.querySelector('.editName');
+  if (editable) return editable.value.trim() || "Blank Player";
+  return card.dataset.playerName || "Player";
+}
+function applyBattingOrder(){
+  const grid = document.getElementById('chartGrid');
+  const cards = [...grid.children];
+  cards.sort((a,b)=>{
+    const diff = getCardOrder(a) - getCardOrder(b);
+    if (diff !== 0) return diff;
+    return cardDisplayName(a).localeCompare(cardDisplayName(b));
+  });
+  grid.innerHTML = "";
+  cards.forEach(c=>grid.appendChild(c));
+  buildLiveRosterFromCharts();
+}
+function alphabetizeCards(){
+  const grid = document.getElementById('chartGrid');
+  const cards = [...grid.children];
+  cards.sort((a,b)=>cardDisplayName(a).localeCompare(cardDisplayName(b)));
+  grid.innerHTML = "";
+  cards.forEach((c,idx)=>{
+    const input = c.querySelector('.orderInput');
+    if(input) input.value = idx+1;
+    grid.appendChild(c);
+  });
+  buildLiveRosterFromCharts();
+}
+function saveChartPNG(canvas, filename) {
+  html2canvas(canvas, { backgroundColor: "#ffffff" }).then((img) => {
+    const link = document.createElement("a");
+    link.download = filename + "_spraychart.png";
+    link.href = img.toDataURL();
+    link.click();
+  });
+}
+function downloadTeamPDF() { window.print(); }
+
+/* live state + sessions */
+let liveState = {
+  teamName: "",
+  gameLabel: "",
+  currentIndex: 0,
+  players: [],
+  sessions: [],
+  activeSessionId: null,
+  entries: [],
+  draft: { resultType: null, selectedZone: null, note: "" }
+};
+let lastFieldTapAt = 0;
+function saveLiveState(){
+  liveState.teamName = document.getElementById('teamName').value.trim();
+  liveState.gameLabel = document.getElementById('gameLabel').value.trim();
+  liveState.draft.note = document.getElementById('notesBox').value || "";
+  localStorage.setItem(LIVE_STATE_KEY, JSON.stringify(liveState));
+  renderSessionList();
+  renderInsights();
+}
+function loadLiveState(){
+  const raw = localStorage.getItem(LIVE_STATE_KEY);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.players)) liveState = parsed;
+  } catch(e){}
+}
+function currentSession(){
+  return liveState.sessions.find(s => s.id === liveState.activeSessionId) || null;
+}
+function startNewSession(){
+  const name = document.getElementById('sessionName').value.trim() || document.getElementById('gameLabel').value.trim() || ("Session " + (liveState.sessions.length + 1));
+  const session = {
+    id: Date.now().toString(36),
+    name,
+    gameLabel: document.getElementById('gameLabel').value.trim(),
+    startedAt: new Date().toISOString(),
+    status: "active"
+  };
+  liveState.sessions.push(session);
+  liveState.activeSessionId = session.id;
+  document.getElementById('currentSessionLabel').textContent = session.name;
+  saveLiveState();
+  renderSessionList();
+}
+function loadSelectedSessionToLive(){
+  const active = currentSession();
+  if (!active) { alert("Start a session first."); return; }
+  document.getElementById('sessionName').value = active.name || "";
+  document.getElementById('gameLabel').value = active.gameLabel || "";
+  renderSessionList();
+  renderInsights();
+}
+function buildLiveRosterFromCharts(){
+  const cards = [...document.querySelectorAll('#chartGrid .chartCard')];
+  const oldPlayers = liveState.players || [];
+  liveState.players = cards.map((card, idx)=>{
+    const editable = card.querySelector('.editName');
+    const name = editable ? (editable.value.trim() || "Blank Player") : (card.dataset.playerName || "");
+    const number = card.dataset.playerNumber || "";
+    const order = getCardOrder(card) || (idx + 1);
+    const existing = oldPlayers.find(p => p.name === name && p.number === number);
+    return {
+      id: existing?.id || (Date.now().toString(36) + "_" + idx),
+      name, number, order,
+      provisionalHits: existing?.provisionalHits || [],
+      notes: existing?.notes || [],
+      zoneNotes: existing?.zoneNotes || []
+    };
+  });
+  if (!liveState.activeSessionId) startNewSession();
+  sortLiveRosterByOrder(false);
+  syncLiveOverlayToCharts();
+  renderLiveBatterList();
+  updateFilterPlayerOptions();
+  saveLiveState();
+  alert("Live mode roster updated from current charts.");
+}
+function rebuildLiveRosterFromCards(){ buildLiveRosterFromCharts(); }
+function sortLiveRosterByOrder(save=true){
+  liveState.players.sort((a,b)=>{
+    const ao = Number.isFinite(+a.order) ? +a.order : 9999;
+    const bo = Number.isFinite(+b.order) ? +b.order : 9999;
+    if (ao !== bo) return ao - bo;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+  if (liveState.currentIndex >= liveState.players.length) liveState.currentIndex = 0;
+  renderLiveBatterList();
+  drawLiveField();
+  updateFilterPlayerOptions();
+  if(save) saveLiveState();
+}
+function currentPlayer(){ return liveState.players[liveState.currentIndex] || null; }
+function prevBatter(){
+  if (!liveState.players.length) return;
+  liveState.currentIndex = (liveState.currentIndex - 1 + liveState.players.length) % liveState.players.length;
+  renderLiveBatterList(); drawLiveField(); saveLiveState();
+}
+function nextBatter(){
+  if (!liveState.players.length) return;
+  liveState.currentIndex = (liveState.currentIndex + 1) % liveState.players.length;
+  renderLiveBatterList(); drawLiveField(); saveLiveState();
+}
+function renderLiveBatterList(){
+  const wrap = document.getElementById('battingList');
+  wrap.innerHTML = "";
+  const session = currentSession();
+  document.getElementById('currentSessionLabel').textContent = session ? session.name : 'None';
+  if (!liveState.players.length) {
+    wrap.innerHTML = '<div class="helper">No live roster yet. Build charts first, then tap "Send Current Charts to Live Mode".</div>';
+    updateCurrentBatterLabel();
+    updateLiveLog();
+    return;
+  }
+  liveState.players.forEach((p, idx)=>{
+    const hitsThisSession = p.provisionalHits.filter(h => !session || h.sessionId === session.id).length;
+    const row = document.createElement('div');
+    row.className = 'batterRow' + (idx === liveState.currentIndex ? ' current' : '');
+    row.innerHTML = `
+      <input class="orderBox" type="number" min="1" value="${p.order || ''}">
+      <div class="namePill">${p.name || 'Blank Player'} ${p.number ? '(#' + p.number + ')' : ''}<span class="tag">${hitsThisSession} live</span></div>
+      <button class="smallBtn secondaryBtn">Set</button>
+      <button class="smallBtn">Up</button>
+      <button class="smallBtn">Down</button>
+    `;
+    const [orderInput, , setBtn, upBtn, downBtn] = row.children;
+    row.onclick = (e)=>{
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+      liveState.currentIndex = idx;
+      renderLiveBatterList(); drawLiveField(); saveLiveState();
+    };
+    setBtn.onclick = ()=>{ p.order = parseInt(orderInput.value,10) || 9999; sortLiveRosterByOrder(); };
+    upBtn.onclick = ()=>{ if(idx<=0)return; const prev=liveState.players[idx-1]; const t=p.order; p.order=prev.order; prev.order=t; sortLiveRosterByOrder(); };
+    downBtn.onclick = ()=>{ if(idx>=liveState.players.length-1)return; const next=liveState.players[idx+1]; const t=p.order; p.order=next.order; next.order=t; sortLiveRosterByOrder(); };
+    wrap.appendChild(row);
+  });
+  updateCurrentBatterLabel();
+  updateLiveLog();
+}
+function updateCurrentBatterLabel(){
+  const p = currentPlayer();
+  document.getElementById('currentBatterLabel').textContent = p ? `${p.name}${p.number ? ' (#' + p.number + ')' : ''}` : 'None selected';
+}
+
+/* live drafting */
+function setActiveResult(result, btn){
+  liveState.draft.resultType = result;
+  document.querySelectorAll('#resultButtons button').forEach(b=>b.classList.remove('activeResult'));
+  if(btn) btn.classList.add('activeResult');
+  saveLiveState();
+}
+function inferLocationDepthFromPoint(x, y){
+  const dx = x - homeX;
+  const dy = y - homeY;
+
+  // Reject taps below/behind home plate
+  if (dy > 0) return null;
+
+  const angle = Math.atan2(dy, dx);
+  if (angle < FOUL_LEFT_ANGLE || angle > FOUL_RIGHT_ANGLE) return null;
+
+  const radius = Math.sqrt(dx*dx + dy*dy);
+
+  // Keep the ACTUAL touch point for drawing
+  // Still derive a zone label for logs / summaries
+  const rel = (angle - FOUL_LEFT_ANGLE) / (FOUL_RIGHT_ANGLE - FOUL_LEFT_ANGLE);
+  let loc = "CF";
+  if (rel < 0.20) loc = "LF";
+  else if (rel < 0.40) loc = "LCF";
+  else if (rel < 0.60) loc = "CF";
+  else if (rel < 0.80) loc = "RCF";
+  else loc = "RF";
+
+  let depth = "medium";
+  const shallowCut = infieldRadius + ((outfieldRadius - infieldRadius) * 0.28);
+  const deepCut = infieldRadius + ((outfieldRadius - infieldRadius) * 0.72);
+  if (radius <= shallowCut) depth = "shallow";
+  else if (radius >= deepCut) depth = "deep";
+
+  return { loc, depth, endX: x, endY: y };
+}
+function recordLiveHitFromPoint(x, y){
+  const p = currentPlayer();
+  const session = currentSession();
+  if (!p) { alert("Choose a current batter first."); return; }
+  if (!session) { alert("Start a session first."); return; }
+  if (!liveState.draft.resultType) { alert("Choose a hit type first."); return; }
+  const info = inferLocationDepthFromPoint(x, y);
+  if (!info) { alert("Tap inside the field of play. The line will go to your exact touch point."); return; }
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    sessionId: session.id,
+    sessionName: session.name,
+    playerId: p.id,
+    playerName: p.name,
+    playerNumber: p.number,
+    type: liveState.draft.resultType,
+    loc: info.loc,
+    depth: liveState.draft.resultType === "BUNT" ? "shallow" : info.depth,
+    endX: x,
+    endY: y,
+    timestamp: new Date().toISOString(),
+    gameLabel: document.getElementById('gameLabel').value.trim(),
+    note: (document.getElementById('notesBox').value || "").trim(),
+    swingZone: liveState.draft.selectedZone || null,
+    source: "provisional"
+  };
+  p.provisionalHits.push(entry);
+  if (entry.note) p.notes.push({ timestamp: entry.timestamp, text: entry.note, gameLabel: entry.gameLabel, sessionId: session.id });
+  if (entry.swingZone) p.zoneNotes.push({ timestamp: entry.timestamp, zone: entry.swingZone, type: entry.type, gameLabel: entry.gameLabel, sessionId: session.id });
+  liveState.entries.push(entry);
+  syncLiveOverlayToCharts(); updateLiveLog(); renderSessionList(); renderInsights();
+  clearLiveDraft(false); nextBatter(); saveLiveState();
+}
+function recordNonBIP(type){
+  const p = currentPlayer(), session = currentSession();
+  if (!p) { alert("Choose a current batter first."); return; }
+  if (!session) { alert("Start a session first."); return; }
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    sessionId: session.id,
+    sessionName: session.name,
+    playerId: p.id,
+    playerName: p.name,
+    playerNumber: p.number,
+    type, loc: null, depth: null,
+    timestamp: new Date().toISOString(),
+    gameLabel: document.getElementById('gameLabel').value.trim(),
+    note: (document.getElementById('notesBox').value || "").trim(),
+    swingZone: liveState.draft.selectedZone || null,
+    source: "provisional"
+  };
+  if (entry.note) p.notes.push({ timestamp: entry.timestamp, text: entry.note, gameLabel: entry.gameLabel, sessionId: session.id });
+  if (entry.swingZone) p.zoneNotes.push({ timestamp: entry.timestamp, zone: entry.swingZone, type: entry.type, gameLabel: entry.gameLabel, sessionId: session.id });
+  liveState.entries.push(entry);
+  updateLiveLog(); renderSessionList(); renderInsights(); clearLiveDraft(false); nextBatter(); saveLiveState();
+}
+function attachNoteOnly(){
+  const p = currentPlayer(), session = currentSession();
+  if (!p) { alert("Choose a current batter first."); return; }
+  if (!session) { alert("Start a session first."); return; }
+  const note = (document.getElementById('notesBox').value || "").trim();
+  const zone = liveState.draft.selectedZone;
+  if (!note && !zone) { alert("Add a note or pick a strike-zone box first."); return; }
+  const ts = new Date().toISOString();
+  if (note) p.notes.push({ timestamp: ts, text: note, gameLabel: document.getElementById('gameLabel').value.trim(), sessionId: session.id });
+  if (zone) p.zoneNotes.push({ timestamp: ts, zone, type: "NOTE", gameLabel: document.getElementById('gameLabel').value.trim(), sessionId: session.id });
+  updateLiveLog(); renderInsights(); clearLiveDraft(false); saveLiveState();
+}
+function clearLiveDraft(save=true){
+  liveState.draft.resultType = null;
+  liveState.draft.selectedZone = null;
+  document.querySelectorAll('#resultButtons button').forEach(b=>b.classList.remove('activeResult'));
+  document.getElementById('notesBox').value = "";
+  document.querySelectorAll('.swingCell').forEach(c=>c.classList.remove('selected'));
+  if(save) saveLiveState();
+}
+function undoLastLiveEntry(){
+  const p = currentPlayer();
+  if (!p) return;
+  const session = currentSession();
+  const last = [...liveState.entries].reverse().find(e => e.playerId === p.id && (!session || e.sessionId === session.id));
+  if (!last) { alert("No live entry to undo for current batter in this session."); return; }
+  liveState.entries = liveState.entries.filter(e => e.id !== last.id);
+  if (["LD","GB","FB","BUNT"].includes(last.type)) p.provisionalHits = p.provisionalHits.filter(e => e.id !== last.id);
+  if (last.note) {
+    const i = p.notes.findIndex(n => n.timestamp === last.timestamp && n.text === last.note);
+    if (i >= 0) p.notes.splice(i,1);
+  }
+  if (last.swingZone) {
+    const i = p.zoneNotes.findIndex(z => z.timestamp === last.timestamp && z.zone === last.swingZone);
+    if (i >= 0) p.zoneNotes.splice(i,1);
+  }
+  syncLiveOverlayToCharts(); updateLiveLog(); drawLiveField(); renderSessionList(); renderInsights(); saveLiveState();
+}
+
+/* sessions + insights */
+function renderSessionList(){
+  const wrap = document.getElementById('sessionList');
+  const sessions = [...liveState.sessions].sort((a,b)=> (b.startedAt||'').localeCompare(a.startedAt||''));
+  document.getElementById('kpiEntries').textContent = String(liveState.entries.length);
+  document.getElementById('kpiSessions').textContent = String(liveState.sessions.length);
+  if (!sessions.length) {
+    wrap.innerHTML = '<div class="helper">No sessions yet. Start one from the left panel.</div>';
+    return;
+  }
+  wrap.innerHTML = sessions.map(s=>{
+    const count = liveState.entries.filter(e=>e.sessionId===s.id).length;
+    const active = s.id === liveState.activeSessionId ? '<span class="tag">Active</span>' : '';
+    return `<div class="sessionItem" onclick="activateSession('${s.id}')"><strong>${escapeHtml(s.name)}</strong>${active}<br>${new Date(s.startedAt).toLocaleString()}<br>${count} live entries</div>`;
+  }).join('');
+}
+function activateSession(id){
+  liveState.activeSessionId = id;
+  const s = currentSession();
+  document.getElementById('sessionName').value = s?.name || "";
+  document.getElementById('gameLabel').value = s?.gameLabel || "";
+  renderLiveBatterList(); updateLiveLog(); renderSessionList(); renderInsights(); saveLiveState();
+}
+function updateFilterPlayerOptions(){
+  const sel = document.getElementById('filterPlayer');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All players</option>';
+  liveState.players.forEach(p=>{
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.name}${p.number ? ' (#'+p.number+')' : ''}`;
+    sel.appendChild(opt);
+  });
+  sel.value = current || "";
+}
+function entriesForInsightScope(){
+  const mode = document.getElementById('filterMode').value;
+  const playerId = document.getElementById('filterPlayer').value;
+  let entries = [...liveState.entries];
+  if (mode === 'active' && liveState.activeSessionId) entries = entries.filter(e => e.sessionId === liveState.activeSessionId);
+  if (playerId) entries = entries.filter(e => e.playerId === playerId);
+  return entries;
+}
+function renderInsights(){
+  const box = document.getElementById('insightBox');
+  const entries = entriesForInsightScope();
+  if (!entries.length) {
+    box.innerHTML = '<div class="helper">No live entries yet in this scope.</div>';
+    return;
+  }
+  const chase = {};
+  const bip = {};
+  entries.forEach(e=>{
+    if (e.swingZone) chase[e.swingZone] = (chase[e.swingZone] || 0) + 1;
+    if (e.loc && ["LD","GB","FB","BUNT"].includes(e.type)) {
+      const key = `${e.type} to ${e.loc}`;
+      bip[key] = (bip[key] || 0) + 1;
+    }
+  });
+  const topZones = Object.entries(chase).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topBip = Object.entries(bip).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  const notes = [];
+  if (topZones.length) notes.push(`Most common swing zones: ${topZones.map(([z,c])=>`${z} (${c})`).join(', ')}`);
+  if (topBip.length) notes.push(`Most common batted-ball patterns: ${topBip.map(([k,c])=>`${k} (${c})`).join(', ')}`);
+  const strikeouts = entries.filter(e=>e.type==="K").length;
+  const walks = entries.filter(e=>e.type==="BB").length;
+  if (strikeouts) notes.push(`Strikeouts logged: ${strikeouts}`);
+  if (walks) notes.push(`Walks logged: ${walks}`);
+  box.innerHTML = notes.map(n=>`<div class="insightItem">${escapeHtml(n)}</div>`).join('');
+}
+
+/* current batter log */
+function updateLiveLog(){
+  const wrap = document.getElementById('liveLog');
+  const p = currentPlayer(), session = currentSession();
+  if (!p) { wrap.innerHTML = '<div class="helper">No current batter selected.</div>'; return; }
+
+  const combined = [];
+  p.provisionalHits.filter(h=>!session || h.sessionId === session.id).forEach(e=>combined.push({kind:'hit', ...e}));
+  p.notes.filter(n=>!session || n.sessionId === session.id).forEach(n=>combined.push({kind:'note', ...n}));
+  p.zoneNotes.filter(z=>!session || z.sessionId === session.id).forEach(z=>combined.push({kind:'zone', ...z}));
+  combined.sort((a,b)=> (a.timestamp || '').localeCompare(b.timestamp || ''));
+
+  if (!combined.length) {
+    wrap.innerHTML = '<div class="helper">No live entries for this batter in this session yet.</div>';
+    return;
+  }
+  wrap.innerHTML = combined.map(item=>{
+    const time = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
+    if (item.kind === 'hit') return `<div class="logItem"><strong>${time}</strong> — ${item.type} ${item.loc ? 'to ' + item.loc + ' (' + item.depth + ')' : ''}${item.swingZone ? ' — zone ' + item.swingZone : ''}${item.note ? '<br>' + escapeHtml(item.note) : ''}</div>`;
+    if (item.kind === 'zone') return `<div class="logItem"><strong>${time}</strong> — swing zone ${escapeHtml(item.zone)}</div>`;
+    return `<div class="logItem"><strong>${time}</strong> — note<br>${escapeHtml(item.text)}</div>`;
+  }).join('');
+}
+
+/* sync overlays */
+function syncLiveOverlayToCharts(){
+  const cards = [...document.querySelectorAll('#chartGrid .chartCard')];
+  cards.forEach(card=>{
+    const editable = card.querySelector('.editName');
+    const name = editable ? (editable.value.trim() || "Blank Player") : (card.dataset.playerName || "");
+    const number = card.dataset.playerNumber || "";
+    const player = liveState.players.find(p => p.name === name && p.number === number);
+    card._provisionalHits = player ? player.provisionalHits.filter(h => {
+      const mode = document.getElementById('filterMode')?.value || 'active';
+      if (mode === 'all') return true;
+      return !liveState.activeSessionId || h.sessionId === liveState.activeSessionId;
+    }) : [];
+    redrawCard(card);
+  });
+}
+
+/* live field + strike zone */
+function drawLiveField(){
+  const canvas = document.getElementById('liveFieldCanvas');
+  const ctx = canvas.getContext('2d');
+  drawField(ctx);
+  const p = currentPlayer(), session = currentSession();
+  if (!p) return;
+  p.provisionalHits.filter(h => !session || h.sessionId === session.id).forEach(h=>{
+    const end = locToXY(h.loc, h.depth, h.type);
+    drawHitLine(ctx, homeX, homeY - 6, end.x, end.y, h.type, true);
+  });
+}
+function handleLiveFieldTap(evt){
+  const now = Date.now();
+  if (now - lastFieldTapAt < 350) return; // prevent duplicate iPad tap/click handling
+  lastFieldTapAt = now;
+
+  const canvas = document.getElementById('liveFieldCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  let clientX, clientY;
+  if (evt.touches && evt.touches.length) {
+    clientX = evt.touches[0].clientX;
+    clientY = evt.touches[0].clientY;
+  } else if (evt.changedTouches && evt.changedTouches.length) {
+    clientX = evt.changedTouches[0].clientX;
+    clientY = evt.changedTouches[0].clientY;
+  } else {
+    clientX = evt.clientX;
+    clientY = evt.clientY;
+  }
+
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top) * scaleY;
+
+  recordLiveHitFromPoint(x, y);
+  drawLiveField();
+}
+function buildSwingGrid(){
+  const wrap = document.getElementById('swingGrid');
+  const labels = ["Up-In","Up","Up-Away","Mid-In","Middle","Mid-Away","Down-In","Down","Down-Away"];
+  wrap.innerHTML = "";
+  labels.forEach(label=>{
+    const div = document.createElement('div');
+    div.className = 'swingCell'; div.textContent = label;
+    div.onclick = ()=>{
+      document.querySelectorAll('.swingCell').forEach(c=>c.classList.remove('selected'));
+      div.classList.add('selected');
+      liveState.draft.selectedZone = label;
+      saveLiveState();
+    };
+    wrap.appendChild(div);
+  });
+}
+
+/* misc */
+function escapeHtml(s){
+  return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  refreshSavedTeamsDropdown();
+  buildSwingGrid();
+  loadLiveState();
+
+  const grid = document.getElementById("chartGrid");
+  grid.innerHTML = "";
+  grid.appendChild(buildBlankChart(1));
+
+  const liveCanvas = document.getElementById('liveFieldCanvas');
+  // iPad-friendly single-touch path to avoid duplicate click + touch firing
+  liveCanvas.addEventListener('touchend', function(e){
+    e.preventDefault();
+    handleLiveFieldTap(e);
+  }, {passive:false});
+  liveCanvas.addEventListener('mouseup', handleLiveFieldTap);
+
+  document.getElementById('notesBox').value = liveState.draft.note || "";
+  document.getElementById('gameLabel').value = liveState.gameLabel || "";
+  if (currentSession()) {
+    document.getElementById('sessionName').value = currentSession().name || "";
+  }
+  updateFilterPlayerOptions();
+  renderLiveBatterList();
+  drawLiveField();
+  renderSessionList();
+  renderInsights();
+  syncLiveOverlayToCharts();
+});
+</script>
+</body>
+</html>
